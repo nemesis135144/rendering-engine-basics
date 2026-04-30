@@ -3,43 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculus Review - Module 1</title>
+    <title>Enter Game PIN - Kahoot!</title>
+    
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; padding-top: 100px; }
-        #gatekeeper { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        body { font-family: sans-serif; background-color: #f2f2f2; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #gatekeeper { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
         input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        #game-container { display: none; } /* This hides the game! */
+        button { width: 100%; padding: 10px; background-color: #46178f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        /* The Secret Room Styles */
+        #game-container { display: none; text-align: center; }
+        canvas { background: white; border: 2px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
     <div id="gatekeeper">
-        <h3>Student Portal</h3>
-        <p>Please enter your access code to view the Logic Assignment.</p>
-        <input type="text" id="secretCode" placeholder="Enter Code...">
-        <button onclick="checkCode()">Access Module</button>
+        <h2 style="color: #46178f;">Student Portal</h2>
+        <p>Please enter your Module Access Code to continue to the lesson.</p>
+        <input type="password" id="secretCode" placeholder="Access Code">
+        <button onclick="checkCode()">Verify Access</button>
     </div>
 
     <div id="game-container">
-        <h1>Welcome to the Secret Zone</h1>
-        <p>Your game will appear here once we add the logic!</p>
-        <canvas id="gameCanvas" width="400" height="400" style="border:1px solid #000; background: white;"></canvas>
+        <h3 style="margin-bottom: 10px;">Connected to Logic Module Sync</h3>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <p style="color: #666;">Use WASD or Arrows to move.</p>
     </div>
 
     <script>
         function checkCode() {
             const code = document.getElementById('secretCode').value;
-            const correctCode = "B-127"; // Change this to whatever you want!
+            const correctCode = "B-127"; // <--- CHANGE THIS TO YOUR PASSWORD
 
             if (code === correctCode) {
-                // If code is right, hide the box and show the game
+                // 1. Enter the Secret Room
                 document.getElementById('gatekeeper').style.display = 'none';
                 document.getElementById('game-container').style.display = 'block';
+
+                // 2. Connect to the Brain (Replace URL with your Render Link)
+                const socket = io("https://math-data-sync.onrender.com");
+                
+                // 3. Start the game logic
+                initGame(socket);
             } else {
-                // Redirect to Kahoot Pin entry page to stay under radar
-                window.location.replace("https://kahoot.it");
+                // The Mask: Redirect to Kahoot if code is wrong
+                window.location.replace("https://kahoot.it/");
             }
+        }
+
+        function initGame(socket) {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            let players = {};
+
+            socket.on('currentPlayers', (serverPlayers) => { players = serverPlayers; });
+
+            socket.on('playerMoved', (data) => {
+                if (players[data.id]) {
+                    players[data.id].x = data.x;
+                    players[data.id].y = data.y;
+                }
+            });
+
+            socket.on('playerDisconnected', (id) => { delete players[id]; });
+
+            window.addEventListener('keydown', (e) => {
+                const myId = socket.id;
+                if (!players[myId]) return;
+                let moved = false;
+                if (e.key === 'w' || e.key === 'ArrowUp') { players[myId].y -= 7; moved = true; }
+                if (e.key === 's' || e.key === 'ArrowDown') { players[myId].y += 7; moved = true; }
+                if (e.key === 'a' || e.key === 'ArrowLeft') { players[myId].x -= 7; moved = true; }
+                if (e.key === 'd' || e.key === 'ArrowRight') { players[myId].x += 7; moved = true; }
+
+                if (moved) {
+                    socket.emit('playerMovement', { x: players[myId].x, y: players[myId].y });
+                }
+            });
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let id in players) {
+                    const p = players[id];
+                    ctx.fillStyle = p.color || '#46178f';
+                    ctx.fillRect(p.x, p.y, 30, 30);
+                    ctx.strokeStyle = "black";
+                    ctx.strokeRect(p.x, p.y, 30, 30);
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
         }
     </script>
 </body>

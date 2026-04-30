@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculus Review - Module 1</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; padding-top: 100px; }
+        #gatekeeper { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        #game-container { display: none; } /* This hides the game! */
+    </style>
+</head>
+<body>
+
+    <div id="gatekeeper">
+        <h3>Student Portal</h3>
+        <p>Please enter your access code to view the Logic Assignment.</p>
+        <input type="text" id="secretCode" placeholder="Enter Code...">
+        <button onclick="checkCode()">Access Module</button>
+    </div>
+
+    <div id="game-container">
+        <h1>Welcome to the Secret Zone</h1>
+        <p>Your game will appear here once we add the logic!</p>
+        <canvas id="gameCanvas" width="400" height="400" style="border:1px solid #000; background: white;"></canvas>
+    </div>
+
+    <script>
+        function checkCode() {
+            const code = document.getElementById('secretCode').value;
+            const correctCode = "8822"; // Change this to whatever you want!
+
+            if (code === correctCode) {
+                // If code is right, hide the box and show the game
+                document.getElementById('gatekeeper').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+            } else {
+                // If code is wrong, kick them out to Wikipedia!
+                window.location.replace("https://en.wikipedia.org/wiki/Linear_algebra");
+            }
+        }
+    </script>
+</body>
+</html>
